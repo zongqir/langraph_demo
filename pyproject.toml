@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "langraph-customer-service"
+version = "1.0.0"
+description = "基于LangGraph和硅基流动API的生产级智能客服系统"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["langraph", "chatbot", "customer-service", "ai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "langgraph==0.2.45",
+    "langchain==0.3.7",
+    "langchain-openai==0.2.5",
+    "langchain-community==0.3.5",
+    "faiss-cpu==1.8.0",
+    "sentence-transformers==3.3.1",
+    "python-dotenv==1.0.1",
+    "pydantic==2.10.1",
+    "pydantic-settings==2.6.1",
+    "loguru==0.7.2",
+    "pandas==2.2.3",
+    "numpy==1.26.4",
+    "fastapi==0.115.4",
+    "uvicorn==0.32.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "mypy>=1.0",
+]
+
+[project.scripts]
+customer-service = "langraph_customer_service.cli:main"
+
+[tool.setuptools]
+packages = ["langraph_customer_service", "langraph_customer_service.agents", "langraph_customer_service.knowledge_base", "langraph_customer_service.tools", "config"]
+
+[tool.setuptools.package-data]
+langraph_customer_service = ["py.typed"]
+
