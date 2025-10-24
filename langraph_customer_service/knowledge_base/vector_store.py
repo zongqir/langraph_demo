@@ -43,9 +43,22 @@ class KnowledgeBase:
                 log.info(f"使用本地模型: {local_model_path}")
                 self.model = SentenceTransformer(str(local_model_path))
             else:
-                log.info(f"从远程加载: {self.embedding_model_name}")
-                self.model = SentenceTransformer(self.embedding_model_name)
+               raise "务必搞清楚，不允许自动下载 太慢了！"
             log.info("嵌入模型加载完成")
+    
+    def add_document(
+        self,
+        document: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
+        """
+        添加单条文档到知识库
+        
+        Args:
+            document: 文档内容
+            metadata: 元数据
+        """
+        self.add_documents([document], [metadata] if metadata else None)
     
     def add_documents(
         self,
@@ -87,7 +100,7 @@ class KnowledgeBase:
         self,
         query: str,
         top_k: int = 3,
-        score_threshold: float = 1.0
+        score_threshold: float = 10.0
     ) -> List[Dict[str, Any]]:
         """
         检索相关文档
@@ -98,7 +111,7 @@ class KnowledgeBase:
             score_threshold: 相似度阈值（L2距离，越小越相似）
         
         Returns:
-            检索结果列表
+            检索结果列表，score字段为相似度（0-1，越大越相似）
         """
         if self.index is None or len(self.documents) == 0:
             log.warning("知识库为空，无法检索")
@@ -117,10 +130,15 @@ class KnowledgeBase:
         results = []
         for dist, idx in zip(distances[0], indices[0]):
             if dist <= score_threshold:
+                # 将L2距离转换为相似度分数 (0-1, 越大越相似)
+                # 使用负指数函数将距离转换为相似度
+                similarity = np.exp(-dist)
+                
                 results.append({
                     "document": self.documents[idx],
                     "metadata": self.metadata[idx],
-                    "score": float(dist),
+                    "score": float(similarity),  # 相似度 (0-1)
+                    "distance": float(dist),      # 原始L2距离
                     "index": int(idx)
                 })
         
@@ -171,4 +189,40 @@ class KnowledgeBase:
         self.documents = []
         self.metadata = []
         log.info("知识库已清空")
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        获取知识库统计信息
+        
+        Returns:
+            统计信息字典
+        """
+        stats = {
+            'total_documents': len(self.documents),
+            'vector_dim': self.index.d if self.index is not None else 0,
+            'index_built': self.index is not None,
+            'categories': {}
+        }
+        
+        # 统计分类
+        for meta in self.metadata:
+            category = meta.get('category', '未分类')
+            stats['categories'][category] = stats['categories'].get(category, 0) + 1
+        
+        return stats
+    
+    def get_all_documents(self) -> List[Dict[str, Any]]:
+        """
+        获取所有文档
+        
+        Returns:
+            文档列表，每个文档包含content和metadata
+        """
+        return [
+            {
+                'content': doc,
+                'metadata': meta
+            }
+            for doc, meta in zip(self.documents, self.metadata)
+        ]
 
