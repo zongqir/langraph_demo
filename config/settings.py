@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     
     # API配置
     siliconflow_api_key: str = Field(
-        default="sk-rqjbncqjhegvtuuogbnpalmmpjwkqlzolqjqrwnevfavngly",
+        ...,  # 必须从环境变量获取，不提供默认值
         alias="SILICONFLOW_API_KEY"
     )
     siliconflow_base_url: str = Field(
