@@ -8,31 +8,20 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent))
 
+# 导入所有依赖（缺少依赖会直接报错，这是正确的行为）
+import langgraph
+import langchain
+import faiss
+import sentence_transformers
+
 from src.utils import log
-
-
-def check_dependencies():
-    """检查依赖是否安装"""
-    log.info("检查依赖...")
-    
-    try:
-        import langgraph
-        import langchain
-        import faiss
-        import sentence_transformers
-        log.info("✅ 所有依赖已安装")
-        return True
-    except ImportError as e:
-        log.error(f"❌ 缺少依赖: {e}")
-        log.info("请运行: pip install -r requirements.txt")
-        return False
+from src.knowledge_base import KnowledgeBase
+from src.agents import CustomerServiceAgent
 
 
 def init_knowledge_base():
     """初始化知识库"""
     log.info("\n初始化知识库...")
-    
-    from src.knowledge_base import KnowledgeBase
     
     kb = KnowledgeBase()
     
@@ -76,8 +65,6 @@ def run_quick_test(kb):
     """运行快速测试"""
     log.info("\n运行快速测试...")
     
-    from src.agents import CustomerServiceAgent
-    
     agent = CustomerServiceAgent(knowledge_base=kb)
     
     test_cases = [
@@ -119,11 +106,7 @@ def main():
 ╚══════════════════════════════════════════════════════════╝
     """)
     
-    # 1. 检查依赖
-    if not check_dependencies():
-        return
-    
-    # 2. 初始化知识库
+    # 1. 初始化知识库
     try:
         kb = init_knowledge_base()
     except Exception as e:
@@ -131,14 +114,14 @@ def main():
         log.info("正在使用无知识库模式...")
         kb = None
     
-    # 3. 运行测试
+    # 2. 运行测试
     try:
         run_quick_test(kb)
     except Exception as e:
         log.error(f"测试运行失败: {e}", exc_info=True)
         return
     
-    # 4. 提示下一步
+    # 3. 提示下一步
     print("\n" + "="*60)
     print("🎉 系统启动成功！")
     print("="*60)

@@ -4,6 +4,7 @@
 """
 from typing import Dict, Any, List, Optional, Literal
 import json
+import re
 from datetime import datetime
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, AIMessage
@@ -87,7 +88,7 @@ class CustomerServiceAgent:
         
         return workflow.compile()
     
-    def _classify_intent(self, state: ConversationState) -> ConversationState:
+    def _classify_intent(self, state: ConversationState) -> Dict[str, Any]:
         """
         意图分类节点
         识别用户意图并提取实体
@@ -95,13 +96,15 @@ class CustomerServiceAgent:
         log.info("执行意图分类")
         
         # 获取最新用户消息
-        user_message = state.messages[-1].content if state.messages else ""
+        messages = state.get("messages", [])
+        user_message = messages[-1].content if messages else ""
         
         # 构造意图分类prompt
+        recent_messages = messages[-3:] if len(messages) > 3 else messages
         prompt = f"""你是一个专业的客服意图分类器。请分析用户的问题，识别意图和提取关键实体。
 
 对话历史：
-{self._format_history(state.get_recent_messages(3))}
+{self._format_history(recent_messages)}
 
 当前用户问题：{user_message}
 
@@ -136,22 +139,31 @@ class CustomerServiceAgent:
         try:
             # 解析意图
             result = self._extract_json(response)
-            state.intent = result.get("intent", "general_chat")
-            state.entities = result.get("entities", {})
-            state.context["needs_tool"] = result.get("needs_tool", False)
-            state.context["needs_knowledge"] = result.get("needs_knowledge", False)
+            intent = result.get("intent", "general_chat")
+            entities = result.get("entities", {})
             
-            log.info(f"意图识别: {state.intent}, 实体: {state.entities}")
+            # 获取或初始化 context
+            context = dict(state.get("context", {}))
+            context["needs_tool"] = result.get("needs_tool", False)
+            context["needs_knowledge"] = result.get("needs_knowledge", False)
+            
+            log.info(f"意图识别: {intent}, 实体: {entities}")
+            
+            return {
+                "intent": intent,
+                "entities": entities,
+                "context": context
+            }
             
         except Exception as e:
             log.error(f"意图分类失败: {e}")
-            state.intent = "general_chat"
-            state.context["needs_tool"] = False
-            state.context["needs_knowledge"] = False
-        
-        return state
+            return {
+                "intent": "general_chat",
+                "entities": {},
+                "context": {"needs_tool": False, "needs_knowledge": False}
+            }
     
-    def _retrieve_knowledge(self, state: ConversationState) -> ConversationState:
+    def _retrieve_knowledge(self, state: ConversationState) -> Dict[str, Any]:
         """
         知识检索节点
         从知识库检索相关信息
@@ -160,88 +172,97 @@ class CustomerServiceAgent:
         
         if self.knowledge_base is None:
             log.warning("知识库未初始化")
-            return state
+            return {"retrieved_docs": []}
         
-        user_message = state.messages[-1].content
+        messages = state.get("messages", [])
+        user_message = messages[-1].content if messages else ""
         
         # 检索相关文档
         results = self.knowledge_base.search(user_message, top_k=3)
         
         if results:
-            state.retrieved_docs = [r["document"] for r in results]
+            retrieved_docs = [r["document"] for r in results]
             log.info(f"检索到 {len(results)} 条相关文档")
+            return {"retrieved_docs": retrieved_docs}
         else:
-            state.retrieved_docs = []
             log.info("未检索到相关文档")
-        
-        return state
+            return {"retrieved_docs": []}
     
-    def _call_tools(self, state: ConversationState) -> ConversationState:
+    def _call_tools(self, state: ConversationState) -> Dict[str, Any]:
         """
         工具调用节点
         根据意图调用相应的业务工具
         """
-        log.info(f"执行工具调用: intent={state.intent}")
+        intent = state.get("intent")
+        entities = state.get("entities", {})
+        log.info(f"执行工具调用: intent={intent}")
         
         tool_result = None
         
         try:
-            if state.intent == "order_query":
-                order_id = state.entities.get("order_id")
+            if intent == "order_query":
+                order_id = entities.get("order_id")
                 if order_id:
                     tool_result = query_order(order_id)
                 
-            elif state.intent == "refund_request":
-                order_id = state.entities.get("order_id")
-                reason = state.entities.get("reason", "用户申请退款")
+            elif intent == "refund_request":
+                order_id = entities.get("order_id")
+                reason = entities.get("reason", "用户申请退款")
                 if order_id:
                     tool_result = process_refund(order_id, reason)
             
-            elif state.intent == "inventory_check":
-                product_name = state.entities.get("product_name")
+            elif intent == "inventory_check":
+                product_name = entities.get("product_name")
                 if product_name:
                     tool_result = check_inventory(product_name)
             
-            elif state.intent == "logistics_query":
-                tracking_number = state.entities.get("tracking_number")
+            elif intent == "logistics_query":
+                tracking_number = entities.get("tracking_number")
                 if tracking_number:
                     tool_result = get_logistics_info(tracking_number)
             
             if tool_result:
-                state.tool_calls.append({
-                    "intent": state.intent,
+                # 使用 operator.add，直接返回新的工具调用，会自动追加
+                new_tool_call = {
+                    "intent": intent,
                     "result": tool_result,
                     "timestamp": datetime.now().isoformat()
-                })
-                log.info(f"工具调用成功: {state.intent}")
+                }
+                log.info(f"工具调用成功: {intent}")
+                return {"tool_calls": [new_tool_call]}
             else:
                 log.warning(f"工具调用失败: 缺少必要参数")
+                return {}
                 
         except Exception as e:
             log.error(f"工具调用异常: {e}")
-        
-        return state
+            return {}
     
-    def _generate_response(self, state: ConversationState) -> ConversationState:
+    def _generate_response(self, state: ConversationState) -> Dict[str, Any]:
         """
         生成回复节点
         基于上下文生成自然语言回复
         """
         log.info("生成回复")
         
-        user_message = state.messages[-1].content
+        messages = state.get("messages", [])
+        tool_calls = state.get("tool_calls", [])
+        retrieved_docs = state.get("retrieved_docs", [])
+        intent = state.get("intent", "general_chat")
+        
+        user_message = messages[-1].content
         
         # 构建上下文
         context_parts = []
         
         # 添加工具调用结果
-        if state.tool_calls:
-            latest_tool_call = state.tool_calls[-1]
+        if tool_calls:
+            latest_tool_call = tool_calls[-1]
             context_parts.append(f"工具调用结果：\n{json.dumps(latest_tool_call['result'], ensure_ascii=False, indent=2)}")
         
         # 添加检索到的知识
-        if state.retrieved_docs:
-            context_parts.append(f"相关知识：\n" + "\n".join(state.retrieved_docs))
+        if retrieved_docs:
+            context_parts.append(f"相关知识：\n" + "\n".join(retrieved_docs))
         
         context = "\n\n".join(context_parts) if context_parts else "无额外上下文"
         
@@ -255,11 +276,12 @@ class CustomerServiceAgent:
 4. 对于无法处理的复杂问题，建议转人工客服
 5. 回复要简洁明了，条理清晰
 
-当前用户意图：{state.intent}
+当前用户意图：{intent}
 """
         
         # 构建对话历史
-        history = self._format_history(state.get_recent_messages(5))
+        recent_messages = messages[-5:] if len(messages) > 5 else messages
+        history = self._format_history(recent_messages)
         
         # 生成回复
         prompt = f"""对话历史：
@@ -277,46 +299,51 @@ class CustomerServiceAgent:
             {"role": "user", "content": prompt}
         ])
         
-        state.current_response = response
-        state.add_message("assistant", response)
+        # 创建新消息 - 使用 operator.add，messages 会自动追加
+        new_message = Message(role="assistant", content=response)
         
         log.info(f"回复生成完成: {len(response)} 字符")
         
-        return state
+        return {
+            "current_response": response,
+            "messages": [new_message]  # 会自动追加到现有消息列表
+        }
     
-    def _check_satisfaction(self, state: ConversationState) -> ConversationState:
+    def _check_satisfaction(self, state: ConversationState) -> Dict[str, Any]:
         """
         满意度检查节点
         判断是否需要转人工
         """
         log.info("检查满意度")
         
+        messages = state.get("messages", [])
         # 简单逻辑：检查是否有明确的负面情绪或要求人工
-        user_message = state.messages[-2].content if len(state.messages) >= 2 else ""
+        user_message = messages[-2].content if len(messages) >= 2 else ""
         
         negative_keywords = ["人工", "转人工", "不满意", "投诉", "经理"]
         
         if any(keyword in user_message for keyword in negative_keywords):
-            state.requires_human = True
-            state.status = "escalated"
             log.info("检测到需要人工介入")
+            return {
+                "requires_human": True,
+                "status": "escalated"
+            }
         else:
-            state.status = "completed"
-        
-        return state
+            return {"status": "completed"}
     
     def _route_after_intent(self, state: ConversationState) -> Literal["knowledge", "tool", "general"]:
         """意图分类后的路由决策"""
-        if state.context.get("needs_tool"):
+        context = state.get("context", {})
+        if context.get("needs_tool"):
             return "tool"
-        elif state.context.get("needs_knowledge"):
+        elif context.get("needs_knowledge"):
             return "knowledge"
         else:
             return "general"
     
     def _should_continue(self, state: ConversationState) -> Literal["continue", "escalate"]:
         """判断是否继续对话"""
-        if state.requires_human:
+        if state.get("requires_human", False):
             return "escalate"
         return "continue"
     
@@ -337,7 +364,6 @@ class CustomerServiceAgent:
             pass
         
         # 尝试提取代码块中的JSON
-        import re
         json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
         if json_match:
             return json.loads(json_match.group(1))
@@ -349,7 +375,7 @@ class CustomerServiceAgent:
         
         raise ValueError("无法从响应中提取JSON")
     
-    def chat(self, user_input: str, state: Optional[ConversationState] = None) -> tuple[str, ConversationState]:
+    def chat(self, user_input: str, state: Optional[Dict[str, Any]] = None) -> tuple[str, Dict[str, Any]]:
         """
         处理用户输入并返回回复
         
@@ -362,17 +388,31 @@ class CustomerServiceAgent:
         """
         # 创建或更新状态
         if state is None:
-            state = ConversationState(
-                session_id=f"session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-            )
+            state = {
+                "session_id": f"session_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "messages": [],
+                "intent": None,
+                "entities": {},
+                "context": {},
+                "tool_calls": [],
+                "retrieved_docs": [],
+                "current_response": "",
+                "requires_human": False,
+                "status": "active"
+            }
         
-        # 添加用户消息
-        state.add_message("user", user_input)
+        # 创建新的用户消息 - 使用 operator.add，会自动追加
+        user_message = Message(role="user", content=user_input)
+        
+        # 准备输入状态 - 添加用户消息
+        input_state = dict(state)
+        input_state["messages"] = [user_message]  # 会自动追加到现有消息
         
         # 执行工作流
-        result = self.graph.invoke(state)
+        result_state = self.graph.invoke(input_state)
         
-        response = result.current_response
+        # LangGraph 返回的是字典
+        response = result_state.get("current_response", "")
         
-        return response, result
+        return response, result_state
 

@@ -11,7 +11,6 @@ sys.path.insert(0, str(project_root))
 
 from src.agents import CustomerServiceAgent
 from src.knowledge_base import KnowledgeBase
-from src.state import ConversationState
 from src.utils import log
 
 
@@ -57,12 +56,12 @@ def main():
             # 显示回复
             print(f"\n🤖 客服: {response}\n")
             
-            # 显示调试信息
-            if state.intent:
-                print(f"[调试] 意图: {state.intent}")
-            if state.entities:
-                print(f"[调试] 实体: {state.entities}")
-            if state.requires_human:
+            # 显示调试信息（state 现在是字典）
+            if state.get("intent"):
+                print(f"[调试] 意图: {state['intent']}")
+            if state.get("entities"):
+                print(f"[调试] 实体: {state['entities']}")
+            if state.get("requires_human"):
                 print("[系统] 检测到需要人工介入，正在为您转接人工客服...")
             print()
             

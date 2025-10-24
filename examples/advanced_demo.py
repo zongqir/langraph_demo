@@ -11,7 +11,6 @@ sys.path.insert(0, str(project_root))
 
 from src.agents import CustomerServiceAgent
 from src.knowledge_base import KnowledgeBase
-from src.state import ConversationState
 from src.utils import log
 import json
 
@@ -23,7 +22,7 @@ def print_section(title: str):
     print("=" * 60 + "\n")
 
 
-def run_test_case(agent: CustomerServiceAgent, query: str, state: ConversationState = None):
+def run_test_case(agent: CustomerServiceAgent, query: str, state = None):
     """运行测试用例"""
     print(f"👤 用户: {query}")
     
@@ -31,22 +30,24 @@ def run_test_case(agent: CustomerServiceAgent, query: str, state: ConversationSt
         response, state = agent.chat(query, state)
         print(f"\n🤖 客服: {response}")
         
-        # 显示详细信息
+        # 显示详细信息（state 现在是字典）
         print(f"\n📊 详细信息:")
-        print(f"   - 意图: {state.intent}")
-        print(f"   - 实体: {json.dumps(state.entities, ensure_ascii=False)}")
+        print(f"   - 意图: {state.get('intent')}")
+        print(f"   - 实体: {json.dumps(state.get('entities', {}), ensure_ascii=False)}")
         
-        if state.tool_calls:
-            print(f"   - 工具调用: {len(state.tool_calls)} 次")
-            latest_call = state.tool_calls[-1]
+        tool_calls = state.get('tool_calls', [])
+        if tool_calls:
+            print(f"   - 工具调用: {len(tool_calls)} 次")
+            latest_call = tool_calls[-1]
             print(f"   - 最新结果: {latest_call['result'].get('message', 'N/A')}")
         
-        if state.retrieved_docs:
-            print(f"   - 检索文档: {len(state.retrieved_docs)} 条")
+        retrieved_docs = state.get('retrieved_docs', [])
+        if retrieved_docs:
+            print(f"   - 检索文档: {len(retrieved_docs)} 条")
         
-        print(f"   - 状态: {state.status}")
+        print(f"   - 状态: {state.get('status')}")
         
-        if state.requires_human:
+        if state.get('requires_human'):
             print("   ⚠️  需要人工介入")
         
         return state

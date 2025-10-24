@@ -37,7 +37,14 @@ class KnowledgeBase:
         """加载嵌入模型"""
         if self.model is None:
             log.info("加载嵌入模型...")
-            self.model = SentenceTransformer(self.embedding_model_name)
+            # 检查本地模型路径
+            local_model_path = Path("./models/bge-large-zh-v1.5")
+            if local_model_path.exists():
+                log.info(f"使用本地模型: {local_model_path}")
+                self.model = SentenceTransformer(str(local_model_path))
+            else:
+                log.info(f"从远程加载: {self.embedding_model_name}")
+                self.model = SentenceTransformer(self.embedding_model_name)
             log.info("嵌入模型加载完成")
     
     def add_documents(
