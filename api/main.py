@@ -1,6 +1,6 @@
 """
 FastAPI REST API服务
-提供HTTP接口供外部调�?
+提供HTTP接口供外部调用
 """
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -29,13 +29,13 @@ class ChatResponse(BaseModel):
     """聊天响应"""
     response: str = Field(..., description="客服回复")
     session_id: str = Field(..., description="会话ID")
-    intent: Optional[str] = Field(None, description="识别的意�?)
-    requires_human: bool = Field(False, description="是否需要人�?)
+    intent: Optional[str] = Field(None, description="识别的意图")
+    requires_human: bool = Field(False, description="是否需要人工")
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
 class HealthResponse(BaseModel):
-    """健康检查响�?""
+    """健康检查响应"""
     status: str
     version: str
     timestamp: str
@@ -60,7 +60,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 全局变量：存储Agent和会话状�?
+# 全局变量：存储Agent和会话状态
 agent: Optional[CustomerServiceAgent] = None
 sessions: Dict[str, ConversationState] = {}
 
@@ -73,33 +73,33 @@ async def startup_event():
     log.info("初始化智能客服API服务...")
     
     try:
-        # 加载知识�?
+        # 加载知识库
         kb = KnowledgeBase()
         if kb.load():
-            log.info("知识库加载成�?)
+            log.info("知识库加载成功")
         else:
-            log.warning("知识库未找到，使用无知识库模�?)
+            log.warning("知识库未找到，使用无知识库模式")
             kb = None
         
         # 创建Agent
         agent = CustomerServiceAgent(knowledge_base=kb)
-        log.info("智能客服Agent初始化完�?)
+        log.info("智能客服Agent初始化完成")
         
     except Exception as e:
-        log.error(f"初始化失�? {e}", exc_info=True)
+        log.error(f"初始化失败: {e}", exc_info=True)
         raise
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """应用关闭时清�?""
+    """应用关闭时清理"""
     log.info("关闭智能客服API服务...")
     sessions.clear()
 
 
 @app.get("/", tags=["系统"])
 async def root():
-    """根路�?""
+    """根路由"""
     return {
         "name": "智能客服系统 API",
         "version": "1.0.0",
@@ -110,7 +110,7 @@ async def root():
 
 @app.get("/health", response_model=HealthResponse, tags=["系统"])
 async def health_check():
-    """健康检�?""
+    """健康检查"""
     services = {
         "agent": agent is not None,
         "knowledge_base": agent.knowledge_base is not None if agent else False
@@ -127,7 +127,7 @@ async def health_check():
 @app.post("/chat", response_model=ChatResponse, tags=["对话"])
 async def chat(request: ChatRequest):
     """
-    处理用户消息并返回客服回�?
+    处理用户消息并返回客服回复
     
     Args:
         request: 聊天请求
@@ -136,14 +136,14 @@ async def chat(request: ChatRequest):
         ChatResponse: 客服回复
     """
     if agent is None:
-        raise HTTPException(status_code=503, detail="服务未就�?)
+        raise HTTPException(status_code=503, detail="服务未就绪")
     
     try:
-        # 获取或创建会话状�?
+        # 获取或创建会话状态
         session_id = request.session_id or f"session_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
         state = sessions.get(session_id)
         
-        # 如果是新会话，创建状�?
+        # 如果是新会话，创建状态
         if state is None:
             state = ConversationState(
                 session_id=session_id,
@@ -157,7 +157,7 @@ async def chat(request: ChatRequest):
         # 更新会话缓存
         sessions[session_id] = updated_state
         
-        # 清理过期会话（保留最�?00个）
+        # 清理过期会话（保留最近100个）
         if len(sessions) > 100:
             oldest_keys = sorted(sessions.keys())[:50]
             for key in oldest_keys:
@@ -171,7 +171,7 @@ async def chat(request: ChatRequest):
         )
         
     except Exception as e:
-        log.error(f"处理对话时出�? {e}", exc_info=True)
+        log.error(f"处理对话时出错: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
 
 
@@ -185,9 +185,9 @@ async def delete_session(session_id: str):
     """
     if session_id in sessions:
         del sessions[session_id]
-        return {"message": f"会话 {session_id} 已删�?}
+        return {"message": f"会话 {session_id} 已删除"}
     else:
-        raise HTTPException(status_code=404, detail="会话不存�?)
+        raise HTTPException(status_code=404, detail="会话不存在")
 
 
 @app.get("/session/{session_id}", tags=["会话"])
@@ -199,7 +199,7 @@ async def get_session(session_id: str):
         session_id: 会话ID
     """
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="会话不存�?)
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     state = sessions[session_id]
     
@@ -239,7 +239,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "服务器内部错�?,
+            "detail": "服务器内部错误",
             "type": type(exc).__name__
         }
     )

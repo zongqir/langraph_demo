@@ -4,10 +4,10 @@
 
 ## 📋 目录
 
-- [项目简介](#项目简�?
+- [项目简介](#项目简介)
 - [核心功能](#核心功能)
-- [技术架构](#技术架�?
-- [快速开始](#快速开�?
+- [技术架构](#技术架构)
+- [快速开始](#快速开始)
 - [使用指南](#使用指南)
 - [项目结构](#项目结构)
 - [生产部署](#生产部署)
@@ -15,53 +15,94 @@
 
 ---
 
-## 🎯 项目简�?
-这是一�?*真正生产可用**的智能客服系统，展示了如何使用LangGraph构建复杂的AI应用。项目涵盖了企业级AI应用的核心要素：
+## 🎯 项目简介
+这是一个**真正生产可用**的智能客服系统，展示了如何使用LangGraph构建复杂的AI应用。项目涵盖了企业级AI应用的核心要素：
 
-- �?**多轮对话管理** - 基于LangGraph的状态图设计
-- �?**意图识别与实体提�?* - 智能理解用户需�?- �?**RAG知识库检�?* - 向量数据库支持的知识问答
-- �?**工具调用（Function Calling�?* - 集成真实业务系统
-- �?**智能转人�?* - 复杂问题自动升级
-- �?**完整日志与监�?* - 生产级可观测�?
+- ✅ **多轮对话管理** - 基于LangGraph的状态图设计
+- ✅ **意图识别与实体提取** - 智能理解用户需求
+- ✅ **RAG知识库检索** - 向量数据库支持的知识问答
+- ✅ **工具调用（Function Calling）** - 集成真实业务系统
+- ✅ **智能转人工** - 复杂问题自动升级
+- ✅ **完整日志与监控** - 生产级可观测性
+
 ## 🌟 核心功能
 
 ### 1. 智能对话引擎
 
-基于LangGraph构建的状态机，支持复杂的对话流程控制�?
+基于LangGraph构建的状态机，支持复杂的对话流程控制：
 ```
-用户输入 �?意图分类 �?知识检�?工具调用 �?生成回复 �?满意度检�?```
+用户输入 → 意图分类 → 知识检索/工具调用 → 生成回复 → 满意度检查
+```
 
-### 2. 知识库管理（RAG�?
-- 使用FAISS向量数据库存储企业知�?- 支持产品信息、FAQ、技术文档等多类型知�?- 语义检索，自动找到最相关的答�?
+### 2. 知识库管理（RAG）
+- 使用FAISS向量数据库存储企业知识
+- 支持产品信息、FAQ、技术文档等多类型知识
+- 语义检索，自动找到最相关的答案
+
 ### 3. 业务工具集成
 
 模拟真实业务场景，支持：
-- 📦 **订单查询** - 查询订单状态、物流信�?- 💰 **退款处�?* - 自动处理退款申�?- 📊 **库存查询** - 实时库存信息
-- 🚚 **物流跟踪** - 快递追�?
-### 4. 生产级特�?
-- 🔐 **配置管理** - 基于Pydantic的类型安全配�?- 📝 **结构化日�?* - 使用Loguru的多级日志系�?- 🛡�?**异常处理** - 完善的错误捕获和恢复机制
-- 📈 **性能优化** - 向量索引、缓存策�?
+- 📦 **订单查询** - 查询订单状态、物流信息
+- 💰 **退款处理** - 自动处理退款申请
+- 📊 **库存查询** - 实时库存信息
+- 🚚 **物流跟踪** - 快递追踪
+
+### 4. 生产级特性
+- 🔐 **配置管理** - 基于Pydantic的类型安全配置
+- 📝 **结构化日志** - 使用Loguru的多级日志系统
+- 🛡️ **异常处理** - 完善的错误捕获和恢复机制
+- 📈 **性能优化** - 向量索引、缓存策略
+
 ---
 
-## 🏗�?技术架�?
+## 🏗️ 技术架构
+
 ### 技术栈
 
 | 组件 | 技术选型 | 说明 |
 |------|---------|------|
 | **LLM框架** | LangChain + LangGraph | 对话流程编排 |
-| **大模�?* | 硅基流动 API | Qwen2.5-7B-Instruct |
-| **向量数据�?* | FAISS | 本地高性能向量检�?|
+| **大模型** | 硅基流动 API | Qwen2.5-7B-Instruct |
+| **向量数据库** | FAISS | 本地高性能向量检索 |
 | **嵌入模型** | BGE-large-zh | 中文语义理解 |
-| **配置管理** | Pydantic Settings | 类型安全的配�?|
-| **日志系统** | Loguru | 结构化日�?|
+| **配置管理** | Pydantic Settings | 类型安全的配置 |
+| **日志系统** | Loguru | 结构化日志 |
 
-### 架构�?
+### 架构图
 ```
-┌─────────────�?�? 用户输入    �?└──────┬──────�?       �?┌──────────────────────────────────────�?�?       LangGraph状态图引擎            �?�? ┌────────────────────────────────�? �?�? �? 1. 意图分类 (Intent Classifier)�? �?�? └────────┬───────────────────────�? �?�?          �?                          �?�? ┌────────────────────┬──────────�?  �?�? �? 2a. 知识检�?     �?2b. 工具调用�? �?�? �? (RAG)            �?(Tools)    �? �?�? └────────┬───────────┴──────┬───�?  �?�?          �?                 �?       �?�? ┌────────────────────────────────�? �?�? �? 3. 回复生成 (Response Gen)    �? �?�? └────────┬───────────────────────�? �?�?          �?                          �?�? ┌────────────────────────────────�? �?�? �? 4. 满意度检�?(Satisfaction)  �? �?�? └────────────────────────────────�? �?└──────────────────────────────────────�?       �?┌──────────────�?�? 智能回复     �?└──────────────�?```
+┌─────────────┐
+│  用户输入    │
+└──────┬──────┘
+       ↓
+┌──────────────────────────────────────┐
+│       LangGraph状态图引擎            │
+│ ┌────────────────────────────────┐ │
+│ │ 1. 意图分类 (Intent Classifier)│ │
+│ └────────┬───────────────────────┘ │
+│          ↓                          │
+│ ┌────────────────────┬──────────┐  │
+│ │ 2a. 知识检索      │2b. 工具调用│ │
+│ │ (RAG)            │(Tools)    │ │
+│ └────────┬───────────┴──────┬───┘  │
+│          ↓                 ↓       │
+│ ┌────────────────────────────────┐ │
+│ │ 3. 回复生成 (Response Gen)    │ │
+│ └────────┬───────────────────────┘ │
+│          ↓                          │
+│ ┌────────────────────────────────┐ │
+│ │ 4. 满意度检查(Satisfaction)  │ │
+│ └────────────────────────────────┘ │
+└──────────────────────────────────────┘
+       ↓
+┌──────────────┐
+│  智能回复     │
+└──────────────┘
+```
 
 ---
 
-## 🚀 快速开�?
+## 🚀 快速开始
+
 ### 环境要求
 
 - Python 3.9+
@@ -95,7 +136,7 @@ pip install -r requirements.txt
 
 4. **配置API密钥**
 
-项目已配置硅基流动API密钥，可直接使用。如需修改配置，请创建`.env`文件�?
+项目已配置硅基流动API密钥，可直接使用。如需修改配置，请创建`.env`文件：
 ```env
 SILICONFLOW_API_KEY=your_api_key_here
 SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
@@ -108,13 +149,15 @@ DEFAULT_MODEL=Qwen/Qwen2.5-7B-Instruct
 python examples/init_knowledge_base.py
 ```
 
-这将创建包含产品信息、FAQ、技术文档的向量知识库�?
+这将创建包含产品信息、FAQ、技术文档的向量知识库。
+
 ---
 
 ## 📖 使用指南
 
-### 1. 简单对话示�?
-最基础的交互式对话�?
+### 1. 简单对话示例
+
+最基础的交互式对话：
 ```bash
 python examples/simple_chat.py
 ```
@@ -136,26 +179,34 @@ python examples/simple_chat.py
 python examples/advanced_demo.py
 ```
 
-演示内容�?- �?产品咨询（知识库检索）
-- �?订单查询（工具调用）
-- �?物流跟踪（工具调用）
-- �?退款申请（工具调用�?- �?库存查询（工具调用）
-- �?多轮对话（上下文理解�?- �?常见问题（FAQ�?- �?复杂问题转人�?
+演示内容：
+- ✅ 产品咨询（知识库检索）
+- ✅ 订单查询（工具调用）
+- ✅ 物流跟踪（工具调用）
+- ✅ 退款申请（工具调用）
+- ✅ 库存查询（工具调用）
+- ✅ 多轮对话（上下文理解）
+- ✅ 常见问题（FAQ）
+- ✅ 复杂问题转人工
+
 ### 3. 代码集成示例
 
-在你的代码中使用智能客服�?
+在你的代码中使用智能客服：
 ```python
 from langraph_customer_service.agents import CustomerServiceAgent
 from langraph_customer_service.knowledge_base import KnowledgeBase
 
-# 初始�?kb = KnowledgeBase()
-kb.load()  # 加载已有知识�?agent = CustomerServiceAgent(knowledge_base=kb)
+# 初始化
+kb = KnowledgeBase()
+kb.load()  # 加载已有知识库
+agent = CustomerServiceAgent(knowledge_base=kb)
 
 # 单次对话
 response, state = agent.chat("iPhone 15 Pro多少钱？")
 print(response)
 
-# 多轮对话（保持上下文�?state = None
+# 多轮对话（保持上下文）
+state = None
 response1, state = agent.chat("帮我查订单ORD001", state)
 response2, state = agent.chat("物流单号是多少？", state)
 ```
@@ -167,21 +218,40 @@ response2, state = agent.chat("物流单号是多少？", state)
 ```
 langraph_demo/
 ├── config/                 # 配置模块
-�?  ├── __init__.py
-�?  └── settings.py        # 系统配置（API密钥、模型配置等�?�?├── src/                   # 核心源代�?�?  ├── agents/           # 智能代理
-�?  �?  ├── __init__.py
-�?  �?  └── customer_service.py  # 客服Agent（LangGraph核心�?�?  �?�?  ├── knowledge_base/   # 知识库模�?�?  �?  ├── __init__.py
-�?  �?  └── vector_store.py      # FAISS向量存储
-�?  �?�?  ├── tools/            # 业务工具
-�?  �?  ├── __init__.py
-�?  �?  └── business_tools.py    # 订单/退�?库存等工�?�?  �?�?  ├── state.py          # 对话状态定�?�?  ├── llm_client.py     # LLM客户端封�?�?  └── utils.py          # 工具函数（日志等�?�?├── examples/              # 示例程序
-�?  ├── init_knowledge_base.py   # 初始化知识库
-�?  ├── simple_chat.py           # 简单对话示�?�?  └── advanced_demo.py         # 高级功能演示
-�?├── data/                  # 数据目录
-�?  └── vector_store/     # 向量数据库文�?�?├── logs/                  # 日志目录
-�?├── requirements.txt       # Python依赖
+│   ├── __init__.py
+│   └── settings.py        # 系统配置（API密钥、模型配置等）
+│
+├── src/                   # 核心源代码
+│   ├── agents/           # 智能代理
+│   │   ├── __init__.py
+│   │   └── customer_service.py  # 客服Agent（LangGraph核心）
+│   │
+│   ├── knowledge_base/   # 知识库模块
+│   │   ├── __init__.py
+│   │   └── vector_store.py      # FAISS向量存储
+│   │
+│   ├── tools/            # 业务工具
+│   │   ├── __init__.py
+│   │   └── business_tools.py    # 订单/退款/库存等工具
+│   │
+│   ├── state.py          # 对话状态定义
+│   ├── llm_client.py     # LLM客户端封装
+│   └── utils.py          # 工具函数（日志等）
+│
+├── examples/              # 示例程序
+│   ├── init_knowledge_base.py   # 初始化知识库
+│   ├── simple_chat.py           # 简单对话示例
+│   └── advanced_demo.py         # 高级功能演示
+│
+├── data/                  # 数据目录
+│   └── vector_store/     # 向量数据库文件
+│
+├── logs/                  # 日志目录
+│
+├── requirements.txt       # Python依赖
 ├── .gitignore
-└── README.md             # 本文�?```
+└── README.md             # 本文档
+```
 
 ### 核心模块说明
 
@@ -190,25 +260,33 @@ langraph_demo/
 LangGraph状态图的核心实现：
 
 - `_classify_intent()` - 意图分类节点
-- `_retrieve_knowledge()` - 知识检索节�?- `_call_tools()` - 工具调用节点
+- `_retrieve_knowledge()` - 知识检索节点
+- `_call_tools()` - 工具调用节点
 - `_generate_response()` - 回复生成节点
-- `_check_satisfaction()` - 满意度检查节�?
-#### 2. `src/state.py` - 状态管�?
+- `_check_satisfaction()` - 满意度检查节点
+
+#### 2. `src/state.py` - 状态管理
+
 定义对话状态模型：
 
 ```python
 class ConversationState:
     messages: List[Message]          # 对话历史
     intent: str                      # 当前意图
-    entities: Dict[str, Any]         # 提取的实�?    tool_calls: List[Dict]           # 工具调用记录
-    retrieved_docs: List[str]        # 检索结�?    requires_human: bool             # 是否需要转人工
+    entities: Dict[str, Any]         # 提取的实体
+    tool_calls: List[Dict]           # 工具调用记录
+    retrieved_docs: List[str]        # 检索结果
+    requires_human: bool             # 是否需要转人工
 ```
 
-#### 3. `src/knowledge_base/vector_store.py` - 知识�?
+#### 3. `src/knowledge_base/vector_store.py` - 知识库
+
 向量检索实现：
 
 - `add_documents()` - 添加文档
-- `search()` - 语义检�?- `save()/load()` - 持久�?
+- `search()` - 语义检索
+- `save()/load()` - 持久化
+
 ---
 
 ## 🏭 生产部署
@@ -217,13 +295,18 @@ class ConversationState:
 
 1. **模型优化**
    - 使用量化模型减少内存占用
-   - 部署本地模型服务（如vLLM�?   - 实现请求批处�?
-2. **向量数据�?*
+   - 部署本地模型服务（如vLLM）
+   - 实现请求批处理
+
+2. **向量数据库**
    - 对于大规模数据，使用Milvus/Qdrant替代FAISS
-   - 实现分片和副本机�?   - 添加缓存�?
+   - 实现分片和副本机制
+   - 添加缓存层
+
 3. **系统架构**
    - 使用FastAPI提供REST API
-   - 添加Redis做会话管�?   - 实现消息队列异步处理
+   - 添加Redis做会话管理
+   - 实现消息队列异步处理
 
 4. **监控告警**
    - 集成Prometheus指标
@@ -232,7 +315,7 @@ class ConversationState:
 
 ### 扩展API服务（可选）
 
-创建`api/main.py`�?
+创建`api/main.py`：
 ```python
 from fastapi import FastAPI
 from langraph_customer_service.agents import CustomerServiceAgent
@@ -246,7 +329,8 @@ async def chat(message: str, session_id: str):
     return {"response": response, "session_id": session_id}
 ```
 
-运行�?```bash
+运行：
+```bash
 uvicorn api.main:app --reload
 ```
 
@@ -256,40 +340,52 @@ uvicorn api.main:app --reload
 
 ### 1. 电商客服
 
-**适用场景**�?- 商品咨询（价格、参数、库存）
+**适用场景**：
+- 商品咨询（价格、参数、库存）
 - 订单管理（查询、修改、取消）
 - 售后服务（退换货、投诉）
 
-**集成方式**�?- 对接订单系统API
-- 连接商品数据�?- 集成物流接口
+**集成方式**：
+- 对接订单系统API
+- 连接商品数据库
+- 集成物流接口
 
-### 2. 技术支�?
-**适用场景**�?- 软件使用问题
+### 2. 技术支持
+
+**适用场景**：
+- 软件使用问题
 - 故障诊断
 - 配置指导
 
-**知识库内�?*�?- 操作手册
+**知识库内容**：
+- 操作手册
 - 常见问题解答
 - 故障排查流程
 
 ### 3. 金融客服
 
-**适用场景**�?- 账户查询
+**适用场景**：
+- 账户查询
 - 产品咨询
 - 业务办理
 
-**安全考虑**�?- 身份验证
+**安全考虑**：
+- 身份验证
 - 敏感信息脱敏
 - 审计日志
 
 ### 4. 企业内部助手
 
-**适用场景**�?- IT工单处理
+**适用场景**：
+- IT工单处理
 - HR政策查询
 - 行政流程指导
 
-**特点**�?- 私有化部�?- 权限管理
-- 多系统集�?
+**特点**：
+- 私有化部署
+- 权限管理
+- 多系统集成
+
 ---
 
 ## 🔑 关键技术点
@@ -309,10 +405,13 @@ workflow.add_conditional_edges(
 )
 ```
 
-**优势**�?- 流程可视�?- 易于调试
+**优势**：
+- 流程可视化
+- 易于调试
 - 灵活扩展
 
-### 2. 意图识别与实体提�?
+### 2. 意图识别与实体提取
+
 使用LLM进行结构化输出：
 
 ```python
@@ -325,11 +424,14 @@ workflow.add_conditional_edges(
 }
 ```
 
-### 3. RAG检索增�?
-```python
-# 1. 向量化查�?query_embedding = model.encode(query)
+### 3. RAG检索增强
 
-# 2. 检索相似文�?results = index.search(query_embedding, top_k=3)
+```python
+# 1. 向量化查询
+query_embedding = model.encode(query)
+
+# 2. 检索相似文档
+results = index.search(query_embedding, top_k=3)
 
 # 3. 注入到prompt
 context = "\n".join([r["document"] for r in results])
@@ -352,12 +454,17 @@ if intent == "order_query":
 
 ## 📊 测试数据
 
-项目内置测试数据�?
-**订单数据**�?- ORD001 - 已发货的iPhone订单
+项目内置测试数据：
+
+**订单数据**：
+- ORD001 - 已发货的iPhone订单
 - ORD002 - 处理中的MacBook订单
 
-**物流单号**�?- SF1234567890 - 顺丰快�?
-**商品**�?- iPhone 15 Pro
+**物流单号**：
+- SF1234567890 - 顺丰快递
+
+**商品**：
+- iPhone 15 Pro
 - MacBook Pro
 - AirPods Pro
 
@@ -365,26 +472,33 @@ if intent == "order_query":
 
 ## 🤝 贡献指南
 
-欢迎贡献代码！请遵循以下规范�?
+欢迎贡献代码！请遵循以下规范：
 1. **代码风格**：遵循PEP 8
 2. **文档**：为新功能添加文档字符串
-3. **测试**：添加单元测�?4. **日志**：使用统一的日志格�?
+3. **测试**：添加单元测试
+4. **日志**：使用统一的日志格式
+
 ---
 
-## 📄 许可�?
+## 📄 许可证
+
 MIT License
 
 ---
 
 ## 💡 学习建议
 
-### 对于初学�?
+### 对于初学者
+
 1. 先运行`simple_chat.py`理解基本流程
 2. 查看`customer_service.py`了解LangGraph用法
-3. 研究`state.py`理解状态设�?4. 尝试添加新的工具函数
+3. 研究`state.py`理解状态设计
+4. 尝试添加新的工具函数
 
-### 对于进阶�?
-1. 优化意图识别的准确�?2. 实现多模态支持（图片、语音）
+### 对于进阶者
+
+1. 优化意图识别的准确性
+2. 实现多模态支持（图片、语音）
 3. 添加对话策略学习
 4. 接入真实业务系统
 
@@ -398,8 +512,9 @@ MIT License
 
 ## 🆘 常见问题
 
-### Q: 如何更换LLM模型�?
-A: 修改`.env`中的`DEFAULT_MODEL`配置，或在代码中指定�?
+### Q: 如何更换LLM模型？
+
+A: 修改`.env`中的`DEFAULT_MODEL`配置，或在代码中指定：
 ```python
 from langraph_customer_service.llm_client import LLMClient
 llm = LLMClient(model="Qwen/Qwen2.5-72B-Instruct")
@@ -407,20 +522,25 @@ llm = LLMClient(model="Qwen/Qwen2.5-72B-Instruct")
 
 ### Q: 知识库支持多大规模？
 
-A: FAISS支持百万级向量。更大规模建议使用Milvus/Qdrant�?
-### Q: 如何添加新的业务工具�?
+A: FAISS支持百万级向量。更大规模建议使用Milvus/Qdrant。
+
+### Q: 如何添加新的业务工具？
+
 A: 在`src/tools/business_tools.py`中添加函数，然后在Agent中注册：
 
 ```python
 def my_tool(param: str) -> Dict:
     return {"result": "..."}
 
-# 在CustomerServiceAgent中注�?self.tools["my_tool"] = my_tool
+# 在CustomerServiceAgent中注册
+self.tools["my_tool"] = my_tool
 ```
 
-### Q: 如何提高回复速度�?
+### Q: 如何提高回复速度？
+
 A: 
-1. 使用更小的模�?2. 减少检索的top_k数量
+1. 使用更小的模型
+2. 减少检索的top_k数量
 3. 实现结果缓存
 4. 异步处理
 
@@ -433,4 +553,4 @@ A:
 
 ---
 
-**�?如果这个项目对你有帮助，请给个Star�?*
+**⭐ 如果这个项目对你有帮助，请给个Star！**

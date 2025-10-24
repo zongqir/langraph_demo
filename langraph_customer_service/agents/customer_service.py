@@ -195,6 +195,7 @@ class CustomerServiceAgent:
         """
         intent = state.get("intent")
         entities = state.get("entities", {})
+        tool_calls = state.get("tool_calls", [])
         log.info(f"执行工具调用: intent={intent}")
         
         tool_result = None
@@ -218,6 +219,19 @@ class CustomerServiceAgent:
             
             elif intent == "logistics_query":
                 tracking_number = entities.get("tracking_number")
+                
+                # 如果当前没有物流单号，尝试从上一次订单查询中获取
+                if not tracking_number and tool_calls:
+                    for call in reversed(tool_calls):
+                        if call.get("intent") == "order_query":
+                            result = call.get("result", {})
+                            if result.get("success"):
+                                data = result.get("data", {})
+                                tracking_number = data.get("tracking_number")
+                                if tracking_number:
+                                    log.info(f"从上下文中获取物流单号: {tracking_number}")
+                                    break
+                
                 if tracking_number:
                     tool_result = get_logistics_info(tracking_number)
             
@@ -232,11 +246,31 @@ class CustomerServiceAgent:
                 return {"tool_calls": [new_tool_call]}
             else:
                 log.warning(f"工具调用失败: 缺少必要参数")
-                return {}
+                # 返回一个错误信息的工具调用记录，而不是空字典
+                error_call = {
+                    "intent": intent,
+                    "result": {
+                        "success": False,
+                        "message": f"缺少必要参数，无法执行{intent}操作",
+                        "data": None
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+                return {"tool_calls": [error_call]}
                 
         except Exception as e:
             log.error(f"工具调用异常: {e}")
-            return {}
+            # 返回异常信息，而不是空字典
+            error_call = {
+                "intent": intent,
+                "result": {
+                    "success": False,
+                    "message": f"工具调用异常: {str(e)}",
+                    "data": None
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            return {"tool_calls": [error_call]}
     
     def _generate_response(self, state: ConversationState) -> Dict[str, Any]:
         """
